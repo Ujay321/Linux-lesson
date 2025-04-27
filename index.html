@@ -13,9 +13,10 @@
             background: #000;
             overflow: hidden;
             position: relative;
+            cursor: none;
         }
 
-        /* 星空背景样式 */
+        /* 星空背景 */
         .stars {
             position: absolute;
             width: 100%;
@@ -23,53 +24,65 @@
             animation: twinkle 2s infinite;
         }
 
-        .stars::before {
-            content: "";
+        /* 流星效果 */
+        .meteor {
             position: absolute;
-            width: 2px;
+            width: 100px;
             height: 2px;
-            background: white;
-            box-shadow: 
-                100px 200px white,
-                300px 400px white,
-                500px 300px white,
-                700px 150px white,
-                800px 450px white,
-                200px 500px white,
-                900px 350px white;
-            animation: move 100s linear infinite;
+            background: linear-gradient(90deg, transparent, white);
+            animation: meteorFall 3s linear infinite;
+            filter: blur(1px);
         }
 
         /* 文字容器 */
         .content {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             text-align: center;
             color: white;
-            font-family: Arial, sans-serif;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            font-family: 'Arial', sans-serif;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            transition: transform 0.3s ease-out;
         }
 
         h1 {
-            font-size: 2.5em;
+            font-size: 3em;
             margin: 0.5em 0;
+            animation: float 3s ease-in-out infinite;
         }
 
-        /* 动画效果 */
+        /* 动画定义 */
         @keyframes twinkle {
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
 
-        @keyframes move {
-            from { transform: translateY(0); }
-            to { transform: translateY(-100%); }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes meteorFall {
+            0% { 
+                transform: translate(-200px, -200px); 
+                opacity: 1;
+            }
+            100% { 
+                transform: translate(100vw, 100vh);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 流星 -->
+    <div class="meteor" style="top:15%; left:20%"></div>
+    <div class="meteor" style="top:30%; left:70%"></div>
+    
+    <!-- 星空 -->
     <div class="stars"></div>
     
+    <!-- 内容 -->
     <div class="content">
         <h1>邹禹杰</h1>
         <h1>2412190712</h1>
@@ -77,23 +90,59 @@
     </div>
 
     <script>
-        // 动态生成更多星星
-        document.addEventListener('DOMContentLoaded', function() {
+        // 动态生成星星
+        document.addEventListener('DOMContentLoaded', () => {
             const starsContainer = document.querySelector('.stars');
-            const starCount = 200;
+            const starCount = 300;
             
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
-                star.style.position = 'absolute';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.width = Math.random() * 2 + 'px';
-                star.style.height = star.style.width;
-                star.style.backgroundColor = 'white';
-                star.style.borderRadius = '50%';
-                star.style.animation = `twinkle ${1 + Math.random() * 2}s infinite`;
+                star.style.cssText = `
+                    position: absolute;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    width: ${Math.random() * 3}px;
+                    height: ${Math.random() * 3}px;
+                    background: rgba(255,255,255,${Math.random()});
+                    border-radius: 50%;
+                    animation: twinkle ${1 + Math.random() * 3}s infinite;
+                    transition: transform 0.3s ease-out;
+                `;
                 starsContainer.appendChild(star);
             }
+        });
+
+        // 鼠标交互
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            // 文字3D倾斜
+            document.querySelector('.content').style.transform = 
+                `perspective(1000px) 
+                 rotateX(${y * 15}deg) 
+                 rotateY(${x * 15}deg)
+                 scale(1.1)`;
+            
+            // 星星避让效果
+            document.querySelectorAll('.stars div').forEach(star => {
+                const rect = star.getBoundingClientRect();
+                const dx = e.clientX - (rect.left + rect.width/2);
+                const dy = e.clientY - (rect.top + rect.height/2);
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                const scale = 1 + (200 / (distance + 100));
+                
+                star.style.transform = `
+                    scale(${scale})
+                    translate(${-dx/20}px, ${-dy/20}px)
+                `;
+                star.style.opacity = 0.5 + (100 / (distance + 50));
+            });
+
+            // 流星加速
+            document.querySelectorAll('.meteor').forEach(meteor => {
+                meteor.style.animationDuration = `${2 + y * 2}s`;
+            });
         });
     </script>
 </body>
